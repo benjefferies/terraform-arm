@@ -1,0 +1,29 @@
+FROM golang:1.12-stretch as builder
+
+ENV TERRAFORM_VERSION=v0.12.20
+
+# Install ARM gcc and build tools
+RUN apt-get -y update && \
+    apt-get -y install crossbuild-essential-armhf && \
+    git clone --branch $TERRAFORM_VERSION https://github.com/hashicorp/terraform /go/src/github.com/hashicorp/terraform
+
+# The command to use to compile C code.
+ENV CC arm-linux-gnueabihf-gcc
+# The command to use to compile C++ code.
+ENV CXX=arm-linux-gnueabihf-g++
+# The OS running on the raspberry pi
+ENV GOOS linux
+# The CPU architecture of the raspberry pi
+ENV GOARCH arm
+ENV GOARM 7
+
+WORKDIR /go/src/github.com/hashicorp/terraform
+
+RUN go get -d -v ./...
+RUN go install -v ./...
+
+FROM arm32v7/debian:9-slim
+
+COPY --from=builder /go/bin/linux_arm/terraform /usr/bin/terraform
+
+ENTRYPOINT [ "terraform" ]
