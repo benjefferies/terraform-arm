@@ -19,8 +19,10 @@ ENV GOARM 7
 
 WORKDIR /go/src/github.com/hashicorp/terraform
 
-RUN go get -d -v ./...
-RUN go install -v ./...
+RUN go get -d -v ./... && \
+    go install -v ./... && \
+    apt-get update && \ 
+    apt-get install curl -y
 
 FROM arm32v7/debian:9-slim
 
